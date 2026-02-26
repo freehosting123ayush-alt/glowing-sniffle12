@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>apkdedo Admin Login</title>
+
+<style>
+body{
+background:#0f0c29;
+color:white;
+font-family:sans-serif;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.container{
+background:rgba(255,255,255,0.05);
+padding:40px;
+border-radius:20px;
+backdrop-filter:blur(20px);
+width:350px;
+}
+
+input{
+width:100%;
+margin-bottom:15px;
+padding:10px;
+border-radius:10px;
+border:none;
+}
+
+button{
+width:100%;
+padding:10px;
+border:none;
+border-radius:10px;
+background:#ff00c8;
+color:white;
+cursor:pointer;
+}
+
+.adminPanel{
+display:none;
+padding:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container" id="loginBox">
+<h2>apkdedo Admin Login</h2>
+<input type="email" id="email" placeholder="Admin Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p id="error" style="color:red;"></p>
+</div>
+
+<div class="adminPanel" id="adminPanel">
+
+<h2>apkdedo Admin Panel</h2>
+<button onclick="logout()" style="background:red;margin-bottom:20px;">Logout</button>
+
+<input type="text" id="name" placeholder="App Name">
+<input type="text" id="logo" placeholder="Logo URL">
+<textarea id="description" placeholder="Description" style="width:100%;height:80px;margin-bottom:15px;"></textarea>
+<input type="text" id="url" placeholder="Download URL">
+<button onclick="addApp()">Upload App</button>
+
+<hr>
+<div id="appList"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyDolFuHJbEifddNVCWzBFO3L-xT-QomhD8",
+authDomain: "modapk-b564b.firebaseapp.com",
+databaseURL: "https://modapk-b564b-default-rtdb.firebaseio.com",
+projectId: "modapk-b564b",
+storageBucket: "modapk-b564b.firebasestorage.app",
+messagingSenderId: "269110578270",
+appId: "1:269110578270:web:0d751349cc86199e7a78cf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+window.login = function(){
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+
+signInWithEmailAndPassword(auth,email,password)
+.catch(err=>{
+document.getElementById("error").innerText = "Invalid Login!";
+});
+}
+
+window.logout = function(){
+signOut(auth);
+}
+
+onAuthStateChanged(auth,(user)=>{
+if(user){
+document.getElementById("loginBox").style.display="none";
+document.getElementById("adminPanel").style.display="block";
+loadApps();
+}else{
+document.getElementById("loginBox").style.display="block";
+document.getElementById("adminPanel").style.display="none";
+}
+});
+
+window.addApp = function(){
+push(ref(db,"apps"),{
+name:document.getElementById("name").value,
+logo:document.getElementById("logo").value,
+description:document.getElementById("description").value,
+url:document.getElementById("url").value
+});
+alert("Uploaded Successfully!");
+}
+
+function loadApps(){
+const appList = document.getElementById("appList");
+
+onValue(ref(db,"apps"),(snapshot)=>{
+appList.innerHTML="";
+snapshot.forEach(child=>{
+const data = child.val();
+appList.innerHTML+=`
+<div style="margin-bottom:10px;">
+<b>${data.name}</b>
+<button onclick="deleteApp('${child.key}')" style="background:red;width:auto;padding:5px 10px;margin-left:10px;">Delete</button>
+</div>
+`;
+});
+});
+}
+
+window.deleteApp = function(id){
+remove(ref(db,"apps/"+id));
+}
+
+</script>
+
+</body>
+  </html>
